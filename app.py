@@ -11,6 +11,11 @@ PDF_DIR = "pdfs"
 os.makedirs(PDF_DIR, exist_ok=True)
 
 
+@app.route("/", methods=["GET"])
+def index():
+    return "Hello, World!"
+
+
 @app.route("/gerar-pdf", methods=["POST"])
 def gerar_pdf():
     data = request.get_json()
