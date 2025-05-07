@@ -16,6 +16,11 @@ def index():
     return "Hello, World!"
 
 
+@app.route("/teste", methods=["GET"])
+def index():
+    return "Hello, World!"
+
+
 @app.route("/gerar-pdf", methods=["POST"])
 def gerar_pdf():
     data = request.get_json()
