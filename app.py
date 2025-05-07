@@ -17,7 +17,7 @@ def index():
 
 
 @app.route("/teste", methods=["GET"])
-def index():
+def index2():
     return "Hello, World!"
 
 
