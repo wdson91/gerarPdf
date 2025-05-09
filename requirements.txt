@@ -2,3 +2,5 @@ Flask==2.3.2
 Markdown==3.4.4
 WeasyPrint==60.2
 gunicorn
+supabase
+dotenv
