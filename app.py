@@ -5,6 +5,8 @@ import os
 from datetime import datetime
 from supabase import create_client, Client
 from dotenv import load_dotenv
+import re
+import unicodedata
 
 # Inicialização do app Flask
 app = Flask(__name__)
@@ -73,6 +75,18 @@ def upload_pdf_to_supabase(pdf_path, filename):
         }
 
 
+def sanitize_filename(title):
+    # Remove acentos
+    nfkd_form = unicodedata.normalize("NFKD", title)
+    only_ascii = nfkd_form.encode("ASCII", "ignore").decode("utf-8")
+
+    # Remove caracteres inválidos e substitui espaços por underscores
+    safe_title = re.sub(r'[\\/*?:"<>|]', "", only_ascii)
+    safe_title = re.sub(r"\s+", "_", safe_title)
+
+    return safe_title
+
+
 # Rotas simples
 @app.route("/", methods=["GET"])
 def index():
@@ -90,8 +104,16 @@ def index2():
 def gerar_pdf():
     data = request.get_json()
 
-    if not data or "markdown" not in data:
-        return jsonify({"erro": "Campo 'markdown' é obrigatório"}), 400
+    required_fields = ["markdown", "title"]
+    missing_fields = [field for field in required_fields if field not in data]
+    title_text = re.sub(r'[\\/*?:"<>|]', "_", data["title"].strip())
+    if missing_fields:
+        return (
+            jsonify({"erro": f"Campo(s) obrigatório(s): {', '.join(missing_fields)}"}),
+            400,
+        )
+
+    safe_title = sanitize_filename(title_text)
 
     markdown_text = data["markdown"]
     html_content = markdown(markdown_text, extensions=["fenced_code"])
@@ -128,7 +150,7 @@ def gerar_pdf():
     """
 
     # Define nome e caminho do PDF
-    filename = f"relatorio_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+    filename = f"{safe_title}.pdf"
     pdf_path = os.path.join(PDF_DIR, filename)
 
     # Gera o PDF localmente
