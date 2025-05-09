@@ -4,3 +4,4 @@ WeasyPrint==60.2
 gunicorn
 supabase
 dotenv
+flask-cors

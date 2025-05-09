@@ -7,10 +7,12 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 import re
 import unicodedata
+from flask_cors import CORS
 
+# libera pra tudo e todos os domínios
 # Inicialização do app Flask
 app = Flask(__name__)
-
+CORS(app)
 # Carregar variáveis de ambiente
 load_dotenv(dotenv_path="./.env")
 
