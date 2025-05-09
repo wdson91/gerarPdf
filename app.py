@@ -101,6 +101,49 @@ def index2():
     return "Hello, World!"
 
 
+@app.route("/upload-audio", methods=["POST"])
+def upload_audio():
+    if "file" not in request.files:
+        return jsonify({"erro": "Nenhum arquivo enviado"}), 400
+
+    audio_file = request.files["file"]
+
+    if audio_file.filename == "":
+        return jsonify({"erro": "Nome de arquivo vazio"}), 400
+
+    # Sanitiza nome do arquivo
+    safe_filename = sanitize_filename(audio_file.filename)
+
+    try:
+        # Upload para Supabase
+        response = supabase.storage.from_("audios").upload(
+            file=audio_file.stream,
+            path=f"audios/{safe_filename}",
+            file_options={
+                "content-type": audio_file.mimetype,
+                "cache-control": "3600",
+                "upsert": "true",
+            },
+        )
+
+        if hasattr(response, "path"):
+            public_url = (
+                f"{SUPABASE_URL}/storage/v1/object/public/audios/{response.path}"
+            )
+            return jsonify(
+                {
+                    "mensagem": "Áudio enviado com sucesso!",
+                    "nome_arquivo": safe_filename,
+                    "url_audio": public_url,
+                }
+            )
+        else:
+            return jsonify({"erro": "Falha no upload", "detalhe": str(response)}), 500
+
+    except Exception as e:
+        return jsonify({"erro": "Erro ao fazer upload", "detalhe": str(e)}), 500
+
+
 # Rota principal para gerar PDF
 @app.route("/gerar-pdf", methods=["POST"])
 def gerar_pdf():
