@@ -104,41 +104,41 @@ def index2():
 @app.route("/upload-audio", methods=["POST"])
 def upload_audio():
     if "file" not in request.files:
-        return jsonify({"erro": "Nenhum arquivo enviado"}), 400
+        return jsonify({"erro": "Nenhum arquivo enviado."}), 400
 
     audio_file = request.files["file"]
+    filename = sanitize_filename(audio_file.filename)
 
-    if audio_file.filename == "":
-        return jsonify({"erro": "Nome de arquivo vazio"}), 400
+    # Salvar temporariamente
+    temp_path = os.path.join("audios", filename)
+    os.makedirs("audios", exist_ok=True)
+    audio_file.save(temp_path)
 
-    # Sanitiza nome do arquivo
-    safe_filename = sanitize_filename(audio_file.filename)
-
+    # Fazer upload para o Supabase
     try:
-        # Upload para Supabase
-        response = supabase.storage.from_("audios").upload(
-            file=audio_file.stream,
-            path=f"audios/{safe_filename}",
-            file_options={
-                "content-type": audio_file.mimetype,
-                "cache-control": "3600",
-                "upsert": "true",
-            },
-        )
+        with open(temp_path, "rb") as f:
+            response = supabase.storage.from_("audios").upload(
+                path=f"audios/{filename}",
+                file=f,
+                file_options={
+                    "content-type": "audio/mpeg",
+                    "cache-control": "3600",
+                    "upsert": "true",
+                },
+            )
 
-        if hasattr(response, "path"):
-            public_url = (
-                f"{SUPABASE_URL}/storage/v1/object/public/audios/{response.path}"
-            )
-            return jsonify(
-                {
-                    "mensagem": "Áudio enviado com sucesso!",
-                    "nome_arquivo": safe_filename,
-                    "url_audio": public_url,
-                }
-            )
-        else:
-            return jsonify({"erro": "Falha no upload", "detalhe": str(response)}), 500
+        # Deletar arquivo local depois do upload
+        os.remove(temp_path)
+
+        public_url = f"{SUPABASE_URL}/storage/v1/object/public/audios/audios/{filename}"
+
+        return jsonify(
+            {
+                "mensagem": "Áudio enviado com sucesso!",
+                "nome_arquivo": filename,
+                "url_audio": public_url,
+            }
+        )
 
     except Exception as e:
         return jsonify({"erro": "Erro ao fazer upload", "detalhe": str(e)}), 500
