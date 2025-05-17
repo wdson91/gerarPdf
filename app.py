@@ -24,7 +24,9 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET")  # só usa se precisar, mas pode remover
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+supabase: Client = create_client(
+    "https://daszicjqshnxpdaxqbip.supabase.co", SUPABASE_KEY
+)
 
 
 def listar_pdfs_usuarios():
@@ -231,4 +233,4 @@ def gerar_pdf():
 
 # Executa a aplicação
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, ssl_context=("cert.pem", "key.pem"))
+    app.run(host="0.0.0.0", port=5000)
