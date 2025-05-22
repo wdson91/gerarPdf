@@ -321,9 +321,12 @@ def gerar_link():
         driver.get("https://lovable.dev/login")
         time.sleep(15)
         print("Acessando o login do Lovable")
-        driver.find_element(By.ID, "email").send_keys(email)
-        driver.find_element(By.ID, "password").send_keys(password)
-
+        email_input = wait.until(EC.presence_of_element_located((By.ID, "email")))
+        email_input.send_keys(email)
+        print("Preenchendo o email")
+        password_input = wait.until(EC.presence_of_element_located((By.ID, "password")))
+        password_input.send_keys(password)
+        print("Preenchendo a senha")
         login_button = driver.find_element(
             By.CSS_SELECTOR,
             "body > div > div > div.flex.justify-center.px-4.py-20 > div > div > div > div.grid.gap-4 > form > div > div.flex.flex-col.gap-3 > div.relative.flex.items-center > div.flex-grow > button",
