@@ -319,7 +319,7 @@ def gerar_link():
 
     try:
         driver.get("https://lovable.dev/login")
-        time.sleep(5)
+        time.sleep(15)
         print("Acessando o login do Lovable")
         driver.find_element(By.ID, "email").send_keys(email)
         driver.find_element(By.ID, "password").send_keys(password)
@@ -330,7 +330,7 @@ def gerar_link():
         )
         login_button.click()
 
-        time.sleep(10)
+        time.sleep(20)
         print("Acessando o painel do Lovable")
         chat_input = wait.until(EC.presence_of_element_located((By.ID, "chatinput")))
         chat_input.send_keys(prompt)
