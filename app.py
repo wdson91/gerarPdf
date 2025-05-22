@@ -305,8 +305,9 @@ def gerar_link():
     data = request.get_json()  # Captura o JSON do corpo
     prompt = data.get("prompt")
     # chromedriver_autoinstaller.install()
-    options.binary_location = "/usr/bin/chromium-browser"
     options = Options()
+    options.binary_location = "/usr/bin/chromium-browser"
+
     options.add_argument("--no-sandbox")
     options.add_argument("--headless")
     options.add_argument("--start-maximized")
