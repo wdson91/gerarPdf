@@ -5,11 +5,24 @@ import os
 from datetime import datetime
 from supabase import create_client, Client
 from dotenv import load_dotenv
-import re
 import unicodedata
 from flask_cors import CORS
+import re
+from gerarpdf import *
 
-# libera pra tudo e todos os domínios
+
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import time
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from dotenv import load_dotenv
+import os
+import chromedriver_autoinstaller
+
 # Inicialização do app Flask
 app = Flask(__name__)
 CORS(app)
@@ -229,6 +242,127 @@ def gerar_pdf():
             "url_pdf": public_url,
         }
     )
+
+
+@app.route("/gerar-caca-palavras", methods=["POST"])
+def gerar_caca_palavras_pdf():
+    data = request.get_json()
+
+    required_fields = ["palavras", "title"]
+    missing_fields = [field for field in required_fields if field not in data]
+    title_text = re.sub(r'[\\/*?:"<>|]', "_", data["title"].strip())
+
+    if missing_fields:
+        return (
+            jsonify({"erro": f"Campo(s) obrigatório(s): {', '.join(missing_fields)}"}),
+            400,
+        )
+
+    palavras = data["palavras"]
+    if not isinstance(palavras, list) or not all(isinstance(p, str) for p in palavras):
+        return (
+            jsonify({"erro": "O campo 'palavras' deve ser uma lista de strings."}),
+            400,
+        )
+
+    safe_title = sanitize_filename(title_text)
+    filename = f"{safe_title}.pdf"
+    pdf_path = os.path.join(PDF_DIR, filename)
+
+    try:
+        grade = gerar_grade_caca_palavras(palavras, tamanho=30)
+        exportar_caca_palavras_para_pdf(grade, palavras, pdf_path)
+    except Exception as e:
+        return jsonify({"erro": "Erro ao gerar PDF", "detalhe": str(e)}), 500
+
+    upload_response = upload_pdf_to_supabase(pdf_path, filename)
+
+    if not upload_response["success"]:
+        return (
+            jsonify(
+                {
+                    "erro": "Falha ao enviar para o Supabase",
+                    "detalhe": upload_response["error"],
+                }
+            ),
+            500,
+        )
+
+    return jsonify({"sucesso": True, "arquivo": filename}), 200
+
+
+##ROTA PARA CRIAR SITE LOVABLE
+
+
+email = os.getenv("EMAIL")
+password = os.getenv("PASSWORD")
+chromedriver_path = os.getenv("CHROMEDRIVER_PATH")
+
+
+@app.route("/gerar_link", methods=["POST"])
+def gerar_link():
+
+    data = request.get_json()  # Captura o JSON do corpo
+    prompt = data.get("prompt")
+    # chromedriver_autoinstaller.install()
+    options.binary_location = "/usr/bin/chromium-browser"
+    options = Options()
+    options.add_argument("--no-sandbox")
+    options.add_argument("--headless")
+    options.add_argument("--start-maximized")
+    options.add_argument("--log-level=3")
+    options.add_argument("--disable-logging")
+
+    driver = webdriver.Chrome(options=options)
+    wait = WebDriverWait(driver, 360)
+
+    try:
+        driver.get("https://lovable.dev/login")
+        time.sleep(5)
+
+        driver.find_element(By.ID, "email").send_keys(email)
+        driver.find_element(By.ID, "password").send_keys(password)
+
+        login_button = driver.find_element(
+            By.CSS_SELECTOR,
+            "body > div > div > div.flex.justify-center.px-4.py-20 > div > div > div > div.grid.gap-4 > form > div > div.flex.flex-col.gap-3 > div.relative.flex.items-center > div.flex-grow > button",
+        )
+        login_button.click()
+
+        time.sleep(10)
+        chat_input = wait.until(EC.presence_of_element_located((By.ID, "chatinput")))
+        chat_input.send_keys(prompt)
+        chat_input.send_keys(Keys.ENTER)
+
+        time.sleep(10)
+        wait.until(
+            EC.invisibility_of_element_located(
+                (By.CSS_SELECTOR, "#preview-url-bar > button > svg")
+            )
+        )
+        time.sleep(10)
+
+        share_button = wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, "#share-menu"))
+        )
+        share_button.click()
+
+        text_element = wait.until(
+            EC.presence_of_element_located(
+                (By.CSS_SELECTOR, ".mr-2.inline-block.text-sm.font-medium")
+            )
+        )
+        nome_texto = text_element.text.strip()
+
+        url_final = f"https://preview--{nome_texto}"
+
+        return jsonify({"url_gerada": url_final})
+
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+    finally:
+        driver.quit()
 
 
 # Executa a aplicação
