@@ -306,7 +306,7 @@ def gerar_link():
     prompt = data.get("prompt")
     # chromedriver_autoinstaller.install()
     options = Options()
-    options.binary_location = "/usr/bin/chromium-browser"
+    options.binary_location = "/bin/chromium-browser"
 
     options.add_argument("--no-sandbox")
     options.add_argument("--headless")
