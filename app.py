@@ -370,6 +370,31 @@ def gerar_link():
         driver.quit()
 
 
+@app.route("/buscar_leads", methods=["POST"])
+def buscar_leads():
+
+    # Captura o cidade e query do JSON do corpo
+    data = request.get_json()
+    cidade = data.get("cidade")
+    query = data.get("query")
+
+    if not cidade or not query:
+        return jsonify({"erro": "Campos 'cidade' e 'query' são obrigatórios."}), 400
+
+    from geop import search_leads
+
+    try:
+        # Chama a função de busca de leads
+        resultados = search_leads(cidade, query)
+
+        if not resultados:
+            return jsonify({"mensagem": "Nenhum lead encontrado."}), 404
+
+        return jsonify(resultados), 200
+    except Exception as e:
+        return jsonify({"erro": str(e)}), 500
+
+
 # Executa a aplicação
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
