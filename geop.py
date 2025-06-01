@@ -278,7 +278,7 @@ def search_leads(cidade, query):
     resultados = buscar_em_toda_area_multithread(coordenadas, query)
     # salvar_json(resultados, query)
     salvar_csv(resultados, query)
-    return {len(resultados), resultados}
+    return {"total": len(resultados), "resultados": resultados}
 
 
 # === EXECUÇÃO PRINCIPAL ===
